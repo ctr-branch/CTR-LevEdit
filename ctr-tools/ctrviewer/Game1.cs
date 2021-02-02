@@ -536,10 +536,7 @@ namespace ctrviewer
 
             foreach (Scene s in scn)
             {
-                foreach (var b in s.visdata)
-                {
-                    bbox.Add(MGConverter.ToLineList(b.bbox));
-                }
+                BspDraw(s.visdata[0], s, 0);
             }
 
             sw.Stop();
@@ -549,6 +546,36 @@ namespace ctrviewer
             UpdateEffects();
 
             RenderEnabled = true;
+        }
+
+        private readonly Color[] colorLevelsOfBsp =
+        {
+            new Color(1.0f,1.0f,1.0f,1.0f),
+            new Color(1.0f,1.0f,0.7f,1.0f),
+            new Color(1.0f,0.7f,0.7f,1.0f),
+            new Color(0.7f,0.7f,0.7f,1.0f),
+            new Color(0.7f,0.7f,0.5f,1.0f),
+            new Color(0.7f,0.5f,0.5f,1.0f),
+            new Color(0.5f,0.5f,0.5f,1.0f),
+            new Color(0.5f,0.5f,0.3f,1.0f),
+            new Color(0.5f,0.3f,0.3f,1.0f),
+            new Color(0.3f,0.3f,0.3f,1.0f),
+            new Color(0.3f,0.3f,0.0f,1.0f),
+            new Color(0.3f,0.0f,0.0f,1.0f),
+            new Color(0.0f,0.0f,0.0f,1.0f)
+        };
+        private void BspDraw(VisData visDat, Scene scene, int level)
+        {
+            List<VisData> childVisData = scene.GetVisDataChildren(visDat); // if node has children get those children
+            if (childVisData != null && childVisData.Count > 0)  // has any children?
+            {
+                foreach (var b in childVisData)
+                {
+                    BspDraw(b, scene, level+1);
+                    // show those children in different color than the parent
+                    bbox.Add(MGConverter.ToLineList(b.bbox, colorLevelsOfBsp[level % colorLevelsOfBsp.Length]));
+                }
+            }
         }
 
         public void ResetCamera()
