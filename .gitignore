@@ -55,6 +55,14 @@ sysinfo.txt
 *.apk
 *.unitypackage
 
+# Ignore .lev .vrm .ptr
+*.lev
+*.vrm
+*.ptr
+*.lev.meta
+*.vrm.meta
+*.ptr.meta
+
 # Crashlytics generated file
 crashlytics-build.properties
 
