@@ -136,17 +136,6 @@ namespace CTRFramework
                             tex2D.filterMode = FilterMode.Point;
                             lowTextures.Add( entry.Key, tex2D);
                         }
-
-                        
-                        /*
-                        if (ctrvram != null)
-                            foreach (var m in texmaps)
-                            {
-                                ctrvram.GetTexture(m.tl, ".\\textures\\", m.name);
-                                Debug.Log(m.name);
-                                Console.ReadKey();
-                            }
-                        */
                     }
 
                     GenerateVis();
@@ -211,70 +200,6 @@ namespace CTRFramework
             }
 
 
-            /*
-            //texture defs
-            br.Jump(header.ptrTexArray);
-            br.Skip(8);
-            int ptrTexList = br.ReadInt32();
-            br.Jump(ptrTexList);
-
-            Debug.Log(ptrTexList.ToString("X8"));
-            Console.ReadKey();
-
-            texmaps = new List<TexMap>();
-
-            TexMap mp;
-
-            do
-            {
-                mp = new TexMap(br, "none");
-
-                Debug.Log(mp.name);
-                Console.ReadKey();
-
-                if (mp.name != "")
-                {
-                    texmaps.Add(mp);
-                }
-
-            }
-            while (mp.name != "");
-            */
-
-
-            /*
-            for (int i = 0; i < visdata.Count; i++)
-            {
-                if (File.Exists($"visdata_{i}.obj"))
-                    File.Delete($"visdata_{i}.obj");
-
-                File.AppendAllText($"visdata_{i}.obj", visdata[i].ToObj());
-            }
-            */
-
-            /*
-             //water texture
-            br.BaseStream.Position = header.ptrWater;
-
-            List<uint> vptr = new List<uint>();
-            List<uint> wptr = new List<uint>();
-
-            for (int i = 0; i < header.cntWater; i++)
-            {
-                vptr.Add(br.ReadUInt32());
-                wptr.Add(br.ReadUInt32());
-            }
-
-            wptr.Sort();
-
-            foreach(uint u in wptr)
-            {
-                Debug.Log(u.ToString("X8"));
-            }
-
-            Console.ReadKey();
-            */
-
             //read pickups
             for (int i = 0; i < header.numInstances; i++)
             {
@@ -298,43 +223,6 @@ namespace CTRFramework
                 dynamics.Add(new DynamicModel(br));
             }
 
-            /*
-            //check why itdoesn't work in export function
-            foreach (var d in dynamics)
-            {
-                d.Export(".\\models\\");
-            }
-            */
-
-            /*
-            foreach (QuadBlock qb in quads)
-            {
-                for (int i = 0; i < 4; i++)
-                {
-                    List<CTRFramework.Vertex> list = qb.GetVertexListq(verts, i);
-
-                    foreach (CTRFramework.Vertex v in list)
-                        Debug.Log(v.ToString());
-
-                    Debug.Log(qb.unk3[i].ToString());
-
-                    /*
-                    //requires 4.6
-                    System.Numerics.Vector3 a = new Vector3(list[3].coord.X - list[0].coord.X, list[3].coord.Y - list[0].coord.Y, list[3].coord.Z - list[0].coord.Z);
-                    System.Numerics.Vector3 b = new Vector3(list[2].coord.X - list[0].coord.X, list[2].coord.Y - list[0].coord.Y, list[2].coord.Z - list[0].coord.Z);
-
-                    Vector3 cross = Vector3.Cross(a, b);
-
-                    Debug.Log(cross.Length()); 
-                    */
-
-            /*
-                }
-
-                Debug.Log();
-                Console.ReadKey();
-            }
-            */
 
             StringBuilder sb = new StringBuilder();
 
@@ -350,22 +238,6 @@ namespace CTRFramework
                     if (v.X < min && v.X != 0) min = v.X;
                     if (v.Y < min && v.Y != 0) min = v.Y;
                 }
-
-                /*
-                sb.AppendLine($"quadblock id = {qb.id}");
-
-                foreach (int i in qb.ind)
-                {
-                    sb.AppendLine(verts[i].coord.ToString(VecFormat.CommaSeparated));
-                }
-
-                foreach (Vector2s v in qb.unk3)
-                {
-                    sb.AppendLine(v.ToString(VecFormat.CommaSeparated));
-                }
-
-                sb.AppendLine();
-                */
             }
 
             Debug.Log($"{min}, {max}");
@@ -426,17 +298,6 @@ namespace CTRFramework
             if (maxDepth > 0)
             {
                 maxDepth--;
-                /*
-                Gizmos.color = new Color(0.0f, 1.0f, 0.0f, 0.2f);
-                Vector3 bmax = new Vector3(node.bbox.Max.X / 255.0f, node.bbox.Max.Y / 255.0f,
-                    -node.bbox.Max.Z / 255.0f);
-                Vector3 bmin = new Vector3(node.bbox.Min.X / 255.0f, node.bbox.Min.Y / 255.0f,
-                    -node.bbox.Min.Z / 255.0f);
-                Vector3 bsize = new Vector3(Mathf.Abs(bmax.x - bmin.x), Mathf.Abs(bmax.y - bmin.y),
-                    Mathf.Abs(bmax.z - bmin.z));
-                Vector3 bpos = new Vector3((bmax.x + bmin.x) / 2.0f, (bmax.y + bmin.y) / 2.0f,
-                    (bmax.z + bmin.z) / 2.0f);
-                Gizmos.DrawWireCube(transform.position + bpos, bsize);*/
                 VisData leftNode = visdata[node.leftChild & 0x3fff];
                 VisData rightNode = visdata[node.rightChild & 0x3fff];
                 if (leftNode != null && !camList.Contains(leftNode) &&
@@ -514,6 +375,39 @@ namespace CTRFramework
                     DrawQuads(leftNode,depth - 1, camList);
                     DrawQuads(rightNode,depth - 1, camList);
                 }
+            }
+        }
+
+        private void Update()
+        {
+            if (showCameraFrustum)
+            {
+                planes = GeometryUtility.CalculateFrustumPlanes(camera);
+                foreach (var visiQuad in visiQuadCompId)
+                {
+                    Transform child = visiQuad.transform.GetChild(1);
+                    child.gameObject.SetActive(false);
+                    child = visiQuad.transform.GetChild(0);
+                    child.gameObject.SetActive(false);
+                }
+
+                // search camera position
+                if (visdata.Count > 0)
+                {
+                    var list = FindCameraNodes(visdata[0], visdata, 32);
+                    DrawQuads(visdata[0], 3, list);
+                }
+            }
+            else
+            {
+                foreach (var visiQuad in visiQuadCompId)
+                {
+                    Transform child = visiQuad.transform.GetChild(1);
+                    child.gameObject.SetActive(false);
+                    child = visiQuad.transform.GetChild(0);
+                    child.gameObject.SetActive(true);
+                }
+
             }
         }
         private void QuadGO(QuadBlock qb, GameObject gameObject, bool highDetail)
