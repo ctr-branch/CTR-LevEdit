@@ -38,6 +38,7 @@ namespace ctrviewer
 
 
         List<VertexPositionColorTexture[]> bbox = new List<VertexPositionColorTexture[]>();
+        List<VertexPositionColorTexture[]> bbox2 = new List<VertexPositionColorTexture[]>();
 
         Menu menu;
 
@@ -571,9 +572,16 @@ namespace ctrviewer
             {
                 foreach (var b in childVisData)
                 {
-                    BspDraw(b, scene, level+1);
-                    // show those children in different color than the parent
-                    bbox.Add(MGConverter.ToLineList(b.bbox, colorLevelsOfBsp[level % colorLevelsOfBsp.Length]));
+                    if (b.IsLeaf) // leaves don't have children
+                    {
+                        bbox2.Add(MGConverter.ToLineList(b.bbox, Color.Magenta));
+                    }
+                    else
+                    {
+                        BspDraw(b, scene, level + 1);
+                        // show those children in different color than the parent
+                        bbox.Add(MGConverter.ToLineList(b.bbox, colorLevelsOfBsp[level % colorLevelsOfBsp.Length]));
+                    }    
                 }
             }
         }
@@ -604,6 +612,7 @@ namespace ctrviewer
         public bool updatemouse = false;
         public static bool InMenu = false;
         public static bool HideInvisible = true;
+        public static bool HideWater = true;
         public static bool RenderEnabled = true;
         public static bool ControlsEnabled = true;
         public static bool IsDrawing = false;
@@ -685,7 +694,7 @@ namespace ctrviewer
                                 InMenu = false;
                                 break;
                             case "loadbig":
-                                LoadLevelFromBig(menu.SelectedItem.Value);//, 0, 2);
+                                LoadLevelFromBig(menu.SelectedItem.Value);//, 0, 2); 
                                 break;
                             case "loadbigadv":
                                 LoadLevelFromBig(menu.SelectedItem.Value, 0, 3);
@@ -713,8 +722,10 @@ namespace ctrviewer
                                     case "lod": settings.UseLowLod = !settings.UseLowLod; break;
                                     case "antialias": settings.AntiAlias = !settings.AntiAlias; break;
                                     case "invis": HideInvisible = !HideInvisible; break;
+                                    case "water": HideWater = !HideWater; break;
                                     case "campos": settings.ShowCamPos = !settings.ShowCamPos; break;
                                     case "visbox": settings.VisData = !settings.VisData; break;
+                                    case "visboxleaf": settings.VisDataLeaves = !settings.VisDataLeaves; break;
                                     case "filter": Samplers.EnableFiltering = !Samplers.EnableFiltering; Samplers.Refresh(); break;
                                     case "wire": Samplers.EnableWireframe = !Samplers.EnableWireframe; break;
                                     case "genmips": settings.GenerateMips = !settings.GenerateMips; break;
@@ -889,6 +900,17 @@ namespace ctrviewer
                     effect.TextureEnabled = false;
 
                     foreach (var x in bbox)
+                    {
+                        foreach (var pass in effect.CurrentTechnique.Passes)
+                        {
+                            pass.Apply();
+                            graphics.GraphicsDevice.DrawUserPrimitives(PrimitiveType.LineList, x, 0, x.Length / 2);
+                        }
+                    }
+
+                    if (settings.VisDataLeaves)
+
+                    foreach (var x in bbox2)
                     {
                         foreach (var pass in effect.CurrentTechnique.Passes)
                         {
