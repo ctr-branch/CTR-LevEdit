@@ -3,6 +3,7 @@
     {
         _Tex ("Texture", 2D) = "white" {}
         _flipRotate ("FlipRotate", Int) = 0 
+        _invisibleTriggers ("InvisibleTriggers", Int) = 0 
     }
 SubShader {
     Pass {
@@ -14,6 +15,7 @@ SubShader {
         sampler2D  _Tex;
         float4 _Tex_ST;
         int _flipRotate;
+        int _invisibleTriggers;
         struct appdata {
             float4 vertex : POSITION;
             fixed4 color : COLOR;
@@ -91,6 +93,9 @@ SubShader {
         fixed4 frag (v2f i, fixed facing : VFACE) : SV_Target { 
             float2 uv = i.uv;
             //uv = flagrot( uv, _flipRotate);
+            if(_invisibleTriggers==1.0 && ( ((i.uv.x*8.0)%2.0)<1.5) ){
+                discard;
+            } 
             return ( facing > 0 ? i.color : i.color ) * tex2D(_Tex, uv); 
         }
         ENDCG
